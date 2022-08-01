@@ -21,19 +21,26 @@ app.use(cors());
 
 //요청 시작
 
-app.get('/users', async (req, res)=> {
+app.get('/mainindex', async (req, res)=> {
     connection.query(
-        "select * from Users",
+        `select * from norMemo 
+        inner join Users
+        on norMemo.userid = Users.userid
+        order by nowDate DESC
+        `,
         (err, rows, fields)=>{
             res.send(rows);
         }
     )
 })
 
-app.get('/users/:userId', async (req, res)=> {
+app.get('/mainindex/:userId', async (req, res)=> {
     const params = req.params.userId;
     connection.query(
-        `select * from Users where userId='${params}'`,
+        `select * from Users 
+        inner join emerMemo
+        on Users.userid = emerMemo.userid
+        where Users.userid = '${params}'`,
         (err, rows, fields)=>{
             if(!rows){
                 console.log(err);

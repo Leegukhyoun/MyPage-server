@@ -21,27 +21,16 @@ app.use(cors());
 
 //요청 시작
 
-app.post('/userlogin', async (req, res)=>{
-    const { userId, userPw } = req.body;
-    connection.query(`select * from Users where userid="${userId}"`,
-    (err, row)=>{
-        const result = row[0];
-        if(!err){
-            if(!result){
-                res.send('id is undefined');
-            }else{
-                if(userPw !== result.pw){
-                    res.send('pw is undefined');
-                }else{
-                    res.send('login successed');
-                }
-            }
-        }else{
-            console.log(err);
+app.get('/users', async (req, res)=> {
+    connection.query(
+        "select * from Users",
+        (err, rows, fields)=>{
+            res.send(rows);
         }
-    })
+    )
 })
-app.get('/main/:userId', async (req, res)=> {
+
+app.get('/users/:userId', async (req, res)=> {
     const params = req.params.userId;
     connection.query(
         `select * from Users where userId='${params}'`,
@@ -54,7 +43,6 @@ app.get('/main/:userId', async (req, res)=> {
         }
     )
 })
-
 
 
 //요청 종료

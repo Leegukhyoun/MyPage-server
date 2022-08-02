@@ -15,6 +15,7 @@ const connection = mysql.createConnection({
     password:conf.password,
     port:conf.port,
     database:conf.database,
+    multipleStatements: true
 });
 app.use(express.json());
 app.use(cors());
@@ -26,6 +27,8 @@ app.get('/mainindex', async (req, res)=> {
         `select * from norMemo 
         inner join Users
         on norMemo.userid = Users.userid
+        inner join picMemo
+        on Users.userid = picMemo.userid
         order by nowDate DESC
         `,
         (err, rows, fields)=>{
@@ -36,18 +39,18 @@ app.get('/mainindex', async (req, res)=> {
 
 app.get('/mainindex/:userId', async (req, res)=> {
     const params = req.params.userId;
-    connection.query(
-        `select * from Users 
-        inner join emerMemo
-        on Users.userid = emerMemo.userid
-        where Users.userid = '${params}'`,
-        (err, rows, fields)=>{
-            if(!rows){
-                console.log(err);
-            }
-            console.log(rows);
-            res.send(rows);
-        }
+    const sql1 =  `select * from Users where userid = '${params}';`;
+    const sql2 =  `select * from norMemo
+                   inner join Users on norMemo.userid = Users.userid 
+                   where Users.userid = '${params}' order by nowDate desc limit 6;`;
+    const sql3 =  `select * from emerMemo where userid = '${params}';`;
+    const sql4 =  `select * from picMemo
+                    inner join Users on picMemo.userid = Users.userid
+                    where Users.userid = '${params}' order by nowDate desc limit 4;`;
+    const sql5 =  `select * from Dday where userid = '${params}' limit 4 ;`;
+    connection.query(sql1 + sql2 + sql3 + sql4 + sql5, function(err, rows, fields){
+        res.send(rows);
+    }
     )
 })
 

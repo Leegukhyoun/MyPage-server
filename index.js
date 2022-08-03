@@ -7,6 +7,9 @@ const fs = require("fs");
 
 const dbinfo = fs.readFileSync('./database.json');
 
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+
 const conf = JSON.parse(dbinfo);
 
 const connection = mysql.createConnection({
@@ -51,6 +54,52 @@ app.get('/mainindex/:userId', async (req, res)=> {
     connection.query(sql1 + sql2 + sql3 + sql4 + sql5, function(err, rows, fields){
         res.send(rows);
     }
+    )
+})
+
+app.post("/join", async (req, res) => {
+    let myPlanitextpw = req.body.pw;
+    let myPass = "";
+    if (myPlanitextpw != '' && myPlanitextpw != undefined) {
+        bcrypt.genSalt(saltRounds, function (err, salt) {
+            bcrypt.hash(myPlanitextpw, salt, function (err, hash) {
+                myPass = hash;
+                const { userid, name, phone1, phone2, phone3, email1, email2, addr1, addr2, img } = req.body;
+                connection.query("insert into Users(userid, name, pw, phone1, phone2, phone3, email1, email2, addr1, addr2, img) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    [userid, name, myPass, phone1, phone2, phone3, email1, email2, addr1, addr2, img],
+                    (err, result, fields) => {
+                        console.log(result);
+                        console.log(err);
+                        res.send("등록되었습니다.");
+                    }
+                )
+            });
+        });
+    }
+})
+
+app.post('/login', async (req, res)=>{
+    // usermail 값에 일치하는 데이터가 있는지 select문
+    // userpass 암호화 해서 쿼리 결과의 패스워드랑 일치하는지 체크
+    const {userid, pw} = req.body;
+    connection.query(`select * from Users where userid = '${userid}'`,
+        (err, rows, fields)=> {
+            if(rows != undefined){
+                if(rows[0] == undefined){
+                    res.send(null)
+                }else{
+                    bcrypt.compare(pw, rows[0].pw, function(err, result){
+                        if(result == true){
+                            res.send(rows[0])
+                        }else{
+                            res.send("실패")
+                        }
+                    });
+                }
+            }else{
+                res.send("실패");
+            }
+        }
     )
 })
 

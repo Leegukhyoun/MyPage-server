@@ -69,7 +69,10 @@ app.get('/mainindex/:userId', async (req, res)=> {
                     inner join Users on picMemo.userid = Users.userid
                     where Users.userid = '${params}' order by nowDate desc limit 4;`;
     const sql5 =  `select * from Dday where userid = '${params}' limit 4 ;`;
-    connection.query(sql1 + sql2 + sql3 + sql4 + sql5, function(err, rows, fields){
+    const sql6 =  `select * from bookmark where userid = '${params}' limit 18 ;`;
+    const sql7 =  `select * from bookmark where userid = '${params}' limit 17, 20 ;`;
+    const sql8 =  `select * from bookmark where userid = '${params}';`;
+    connection.query(sql1 + sql2 + sql3 + sql4 + sql5 + sql6 + sql7 + sql8, function(err, rows, fields){
         res.send(rows);
     }
     )
@@ -96,6 +99,8 @@ app.post("/join", async (req, res) => {
     }
 })
 
+//간단메모
+
 app.post("/emerAdd", async (req, res) => {
     const { emertext, userid } = req.body;
     connection.query(`insert into emerMemo(userid, memo) values ('${userid}', '${emertext}')`,
@@ -111,6 +116,27 @@ app.delete('/delemer/:id', async (req, res) => {
         res.send(rows);
     })
 })
+
+//간단메모 종료
+
+//디데이
+
+app.post("/ddayAdd", async (req, res) => {
+    const { datetext, ddaytext ,userid } = req.body;
+    connection.query(`insert into Dday(userid, date, ddayDesc) values ('${userid}', '${datetext}', '${ddaytext}')`,
+        (err, result, fields) => {
+            res.send("등록 완료");
+        }
+    )
+})
+
+app.delete('/deldday/:id', async (req, res) => {
+    const params = req.params;
+    connection.query(`delete from Dday where id = ${params.id}`, (err, rows, fields) => {
+        res.send(rows);
+    })
+})
+//디데이 종료
 
 app.post('/login', async (req, res)=>{
     // usermail 값에 일치하는 데이터가 있는지 select문
@@ -145,6 +171,22 @@ app.post('/image', upload.single('img'), (req, res)=>{
     // })
 });
 
+
+// 북마크
+app.delete('/bmdelete/:id', async (req, res) => {
+    const params = req.params;
+    connection.query(`delete from bookmark where id = ${params.id}`, (err, rows, fields) => {
+        res.send(rows);
+    })
+})
+app.post("/bmadd", async (req, res) => {
+    const { name, url ,userid } = req.body;
+    connection.query(`insert into bookmark(userid, name, url) values ('${userid}', '${name}', '${url}')`,
+        (err, result, fields) => {
+            res.send("등록 완료");
+        }
+    )
+})
 
 //요청 종료
 

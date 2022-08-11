@@ -30,11 +30,15 @@ app.use("/upload", express.static("upload"));
 const multer = require("multer");
 const upload = multer({
     storage: multer.diskStorage({
-        destination: function(req, file, cb){
-            cb(null, 'upload/')
-        },
-        filename : function(req, file, cb){
-            cb(null, file.originalname)
+        destination: "./upload/",
+        filename: function(req, file, cb){
+            //원본파일명에서 마지막 "."의 위치를 확인
+            let num = file.originalname.lastIndexOf(".");
+            //확장자 추출하기
+            let re = file.originalname.substring(num);
+            let imgname = String(Date.now())+re;
+            //현재시간.확장자로 파일 업로드 하기 
+            cb(null, `${imgname}`);
         }
     })
 });
@@ -61,9 +65,7 @@ app.get('/mainindex', async (req, res)=> {
 app.get('/mainindex/:userId', async (req, res)=> {
     const params = req.params.userId;
     const sql1 =  `select * from Users where userid = '${params}';`;
-    const sql2 =  `select * from norMemo
-                   inner join Users on norMemo.userid = Users.userid 
-                   where Users.userid = '${params}' order by nowDate desc limit 6;`;
+    const sql2 =  `select * from norMemo where userid = '${params}' order by nowDate desc;`;
     const sql3 =  `select * from emerMemo where userid = '${params}';`;
     const sql4 =  `select * from picMemo
                     inner join Users on picMemo.userid = Users.userid
@@ -72,7 +74,8 @@ app.get('/mainindex/:userId', async (req, res)=> {
     const sql6 =  `select * from bookmark where userid = '${params}' limit 18 ;`;
     const sql7 =  `select * from bookmark where userid = '${params}' limit 17, 20 ;`;
     const sql8 =  `select * from bookmark where userid = '${params}';`;
-    connection.query(sql1 + sql2 + sql3 + sql4 + sql5 + sql6 + sql7 + sql8, function(err, rows, fields){
+    const sql2_1 =  `select * from norMemo where userid = '${params}' order by nowDate desc limit 7;`;
+    connection.query(sql1 + sql2 + sql3 + sql4 + sql5 + sql6 + sql7 + sql8 + sql2_1, function(err, rows, fields){
         res.send(rows);
     }
     )
@@ -163,14 +166,19 @@ app.post('/login', async (req, res)=>{
     )
 })
 
-app.post('/image', upload.single('img'), (req, res)=>{
-    const file = req.file;
-    console.log(file);
-    // res.send({
-    //     img : "https://localhost:3001/"+file.destination+file.filename
-    // })
+// app.post('/image', upload.single('img'), (req, res)=>{
+//     const file = req.file;
+//     console.log(file);
+//     res.send({
+//         img: req.file.filename
+//       });
+// });
+app.post("/image", upload.single("img"), function(req, res, next) {
+    res.send({
+      img: req.file.filename
+    });
+    console.log(req.file.filename)
 });
-
 
 // 북마크
 app.delete('/bmdelete/:id', async (req, res) => {
@@ -180,10 +188,64 @@ app.delete('/bmdelete/:id', async (req, res) => {
     })
 })
 app.post("/bmadd", async (req, res) => {
-    const { name, url ,userid } = req.body;
+    const { name, url, userid } = req.body;
     connection.query(`insert into bookmark(userid, name, url) values ('${userid}', '${name}', '${url}')`,
         (err, result, fields) => {
             res.send("등록 완료");
+        }
+    )
+})
+
+// 일반메모
+
+app.post("/normemadd", async (req, res) => {
+    const { title, norDesc, nowDate, userid } = req.body;
+    connection.query(`insert into norMemo(userid, title, norDesc, nowDate) values ('${userid}', '${title}', '${norDesc}', '${nowDate}')`,
+        (err, result, fields) => {
+            res.send("등록 완료");
+        }
+    )
+})
+app.get('/normemodetail/:id', async (req, res)=> {
+    const params = req.params.id;
+    connection.query(
+        `select * from norMemo where id=${params}`,
+        (err, rows, fields)=>{
+            if(!rows){
+                console.log(err);
+            }
+            res.send(rows);
+        }
+    )
+})
+app.get('/normemoedit/:id', async (req, res)=> {
+    const params = req.params.id;
+    connection.query(
+        `select * from norMemo where id=${params}`,
+        (err, rows, fields)=>{
+            if(!rows){
+                console.log(err);
+            }
+            res.send(rows);
+        }
+    )
+})
+app.delete('/norDel/:id', async (req, res) => {
+    const params = req.params;
+    connection.query(`delete from norMemo where id = ${params.id}`, (err, rows, fields) => {
+        res.send(rows);
+    })
+})
+app.put('/normemoedit/:id', async (req, res)=> {
+    const { title, norDesc } = req.body;
+    const params = req.params.id;
+    connection.query(
+        `update norMemo set title = '${title}', norDesc = '${norDesc}' where id = ${params}`,
+        (err, rows, fields)=>{
+            if(!rows){
+                console.log(err);
+            }
+            res.send(rows);
         }
     )
 })

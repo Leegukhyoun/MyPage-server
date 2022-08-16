@@ -61,21 +61,31 @@ app.get('/mainindex', async (req, res)=> {
         }
     )
 })
+app.get('/searchnor/:title', async (req, res)=> {
+    const params = req.params.title;
+    connection.query(
+        `select * from norMemo 
+        where title like '%${params}%'
+        `,
+        (err, rows, fields)=>{
+            res.send(rows);
+        }
+    )
+})
 
 app.get('/mainindex/:userId', async (req, res)=> {
     const params = req.params.userId;
     const sql1 =  `select * from Users where userid = '${params}';`;
     const sql2 =  `select * from norMemo where userid = '${params}' order by nowDate desc;`;
     const sql3 =  `select * from emerMemo where userid = '${params}';`;
-    const sql4 =  `select * from picMemo
-                    inner join Users on picMemo.userid = Users.userid
-                    where Users.userid = '${params}' order by nowDate desc limit 4;`;
+    const sql4 =  `select * from picMemo where userid = '${params}' order by nowDate desc;`;
     const sql5 =  `select * from Dday where userid = '${params}' limit 4 ;`;
     const sql6 =  `select * from bookmark where userid = '${params}' limit 18 ;`;
     const sql7 =  `select * from bookmark where userid = '${params}' limit 17, 20 ;`;
     const sql8 =  `select * from bookmark where userid = '${params}';`;
     const sql2_1 =  `select * from norMemo where userid = '${params}' order by nowDate desc limit 7;`;
-    connection.query(sql1 + sql2 + sql3 + sql4 + sql5 + sql6 + sql7 + sql8 + sql2_1, function(err, rows, fields){
+    const sql4_1 =  `select * from picMemo where userid = '${params}' order by nowDate desc limit 4;`;
+    connection.query(sql1 + sql2 + sql3 + sql4 + sql5 + sql6 + sql7 + sql8 + sql2_1 + sql4_1, function(err, rows, fields){
         res.send(rows);
     }
     )
@@ -166,13 +176,6 @@ app.post('/login', async (req, res)=>{
     )
 })
 
-// app.post('/image', upload.single('img'), (req, res)=>{
-//     const file = req.file;
-//     console.log(file);
-//     res.send({
-//         img: req.file.filename
-//       });
-// });
 app.post("/image", upload.single("img"), function(req, res, next) {
     res.send({
       img: req.file.filename
@@ -236,6 +239,18 @@ app.delete('/norDel/:id', async (req, res) => {
         res.send(rows);
     })
 })
+app.delete('/norAllDel/:userid', async (req, res) => {
+    const params = req.params;
+    connection.query(`delete from Users where userid = '${params.userid}'`, (err, rows, fields) => {
+        res.send(rows);
+    })
+})
+app.delete('/AllNorDel/:userid', async (req, res) => {
+    const params = req.params;
+    connection.query(`delete from norMemo where userid = '${params.userid}'`, (err, rows, fields) => {
+        res.send(rows);
+    })
+})
 app.put('/normemoedit/:id', async (req, res)=> {
     const { title, norDesc } = req.body;
     const params = req.params.id;
@@ -249,6 +264,59 @@ app.put('/normemoedit/:id', async (req, res)=> {
         }
     )
 })
+//일반 종료
+
+//사진메모
+
+app.post("/picmemadd", async (req, res) => {
+    const { pictitle, picDesc, nowDate, userid, picImg } = req.body;
+    connection.query(`insert into picMemo(userid, pictitle, picDesc, picImg, nowDate) values ('${userid}', '${pictitle}', '${picDesc}', '${picImg}', '${nowDate}')`,
+        (err, result, fields) => {
+            res.send("등록 완료");
+        }
+    )
+})
+
+app.get('/picmemodetail/:id', async (req, res)=> {
+    const params = req.params.id;
+    connection.query(
+        `select * from picMemo where id=${params}`,
+        (err, rows, fields)=>{
+            if(!rows){
+                console.log(err);
+            }
+            res.send(rows);
+        }
+    )
+})
+app.delete('/AllPicDel/:userid', async (req, res) => {
+    const params = req.params;
+    connection.query(`delete from picMemo where userid = '${params.userid}'`, (err, rows, fields) => {
+        res.send(rows);
+    })
+})
+app.delete('/picDel/:id', async (req, res) => {
+    const params = req.params;
+    connection.query(`delete from picMemo where id = ${params.id}`, (err, rows, fields) => {
+        res.send(rows);
+    })
+})
+
+app.put('/picmemoedit/:id', async (req, res)=> {
+    const { pictitle, picDesc, picImg } = req.body;
+    const params = req.params.id;
+    connection.query(
+        `update picMemo set pictitle = '${pictitle}', picDesc = '${picDesc}' picImg = '${picImg}' where id = ${params}`,
+        (err, rows, fields)=>{
+            if(!rows){
+                console.log(err);
+            }
+            res.send(rows);
+        }
+    )
+})
+
+//사진메모 종료
 
 //요청 종료
 

@@ -61,11 +61,12 @@ app.get('/mainindex', async (req, res)=> {
         }
     )
 })
-app.get('/searchnor/:title', async (req, res)=> {
-    const params = req.params.title;
+app.get('/searchnor/:userid/:title', async (req, res)=> {
+    const title = req.params.title;
+    const userid = req.params.userid;
     connection.query(
         `select * from norMemo 
-        where title like '%${params}%'
+        where title like '%${title}%' AND userid = '${userid}'
         `,
         (err, rows, fields)=>{
             res.send(rows);
@@ -77,7 +78,7 @@ app.get('/mainindex/:userId', async (req, res)=> {
     const params = req.params.userId;
     const sql1 =  `select * from Users where userid = '${params}';`;
     const sql2 =  `select * from norMemo where userid = '${params}' order by nowDate desc;`;
-    const sql3 =  `select * from emerMemo where userid = '${params}';`;
+    const sql3 =  `select * from emerMemo where userid = '${params}' limit 9 ;`;
     const sql4 =  `select * from picMemo where userid = '${params}' order by nowDate desc;`;
     const sql5 =  `select * from Dday where userid = '${params}' limit 4 ;`;
     const sql6 =  `select * from bookmark where userid = '${params}' limit 18 ;`;
@@ -306,7 +307,7 @@ app.put('/picmemoedit/:id', async (req, res)=> {
     const { pictitle, picDesc, picImg } = req.body;
     const params = req.params.id;
     connection.query(
-        `update picMemo set pictitle = '${pictitle}', picDesc = '${picDesc}' picImg = '${picImg}' where id = ${params}`,
+        `update picMemo set pictitle = '${pictitle}', picDesc = '${picDesc}', picImg = '${picImg}' where id = ${params}`,
         (err, rows, fields)=>{
             if(!rows){
                 console.log(err);
@@ -315,7 +316,30 @@ app.put('/picmemoedit/:id', async (req, res)=> {
         }
     )
 })
-
+app.get('/picmemoedit/:id', async (req, res)=> {
+    const params = req.params.id;
+    connection.query(
+        `select * from picMemo where id=${params}`,
+        (err, rows, fields)=>{
+            if(!rows){
+                console.log(err);
+            }
+            res.send(rows);
+        }
+    )
+})
+app.get('/searchpic/:userid/:pictitle', async (req, res)=> {
+    const pictitle = req.params.pictitle;
+    const userid = req.params.userid;
+    connection.query(
+        `select * from picMemo 
+        where pictitle like '%${pictitle}%' AND userid = '${userid}'
+        `,
+        (err, rows, fields)=>{
+            res.send(rows);
+        }
+    )
+})
 //사진메모 종료
 
 //요청 종료

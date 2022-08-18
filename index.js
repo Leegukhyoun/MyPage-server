@@ -86,7 +86,8 @@ app.get('/mainindex/:userId', async (req, res)=> {
     const sql8 =  `select * from bookmark where userid = '${params}';`;
     const sql2_1 =  `select * from norMemo where userid = '${params}' order by nowDate desc limit 7;`;
     const sql4_1 =  `select * from picMemo where userid = '${params}' order by nowDate desc limit 4;`;
-    connection.query(sql1 + sql2 + sql3 + sql4 + sql5 + sql6 + sql7 + sql8 + sql2_1 + sql4_1, function(err, rows, fields){
+    const sql9 =  `select * from phone where userid = '${params}';`;
+    connection.query(sql1 + sql2 + sql3 + sql4 + sql5 + sql6 + sql7 + sql8 + sql2_1 + sql4_1 + sql9, function(err, rows, fields){
         res.send(rows);
     }
     )
@@ -341,6 +342,26 @@ app.get('/searchpic/:userid/:pictitle', async (req, res)=> {
     )
 })
 //사진메모 종료
+
+//전화번호부
+
+app.delete('/PNdelete/:id', async (req, res) => {
+    const params = req.params;
+    connection.query(`delete from phone where id = ${params.id}`, (err, rows, fields) => {
+        res.send(rows);
+    })
+})
+app.post("/pnadd", async (req, res) => {
+    const { name, phone1, phone2, phone3, text, userid } = req.body;
+    connection.query(`insert into phone(userid, phone1, phone2, phone3, name, text) values ('${userid}', '${phone1}', '${phone2}', '${phone3}', '${name}', '${text}')`,
+        (err, result, fields) => {
+            res.send("등록 완료");
+        }
+    )
+})
+
+//전화번호부 종료
+
 
 //요청 종료
 
